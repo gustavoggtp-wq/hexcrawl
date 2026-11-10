@@ -47,13 +47,13 @@
         }
         .hex-region.active-simple {
             fill: #3b82f6 !important;
-            fill-opacity: 0.45 !important;
+            fill-opacity: 0.55 !important;
             stroke: #60a5fa !important;
             stroke-width: 2.5 !important;
         }
         .hex-region.active-special {
             fill: #eab308 !important;
-            fill-opacity: 0.55 !important;
+            fill-opacity: 0.65 !important;
             stroke: #fde047 !important;
             stroke-width: 3 !important;
         }
@@ -81,7 +81,7 @@
                     <span>Gerador</span>
                 </button>
                 <button id="nav-btn-editor" onclick="switchView('editor')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700">
-                    <i class="ph ph-[pencil-simple] text-base text-amber-400"></i>
+                    <i class="ph ph-pencil-simple text-base text-amber-400"></i>
                     <span>Editar Tabelas</span>
                 </button>
                 <button id="btn-toggle-rules" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
@@ -132,47 +132,53 @@
                     </div>
                 </div>
 
-                <!-- Interactive Hex Diagram -->
+                <!-- Interactive Hex Diagram (Flat-topped geometry) -->
                 <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl flex flex-col items-center relative">
                     <div class="w-full flex justify-between items-center mb-2">
                         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                             <i class="ph ph-compass text-amber-400 text-base"></i>
-                            Diagrama de Regiões do Hex
+                            Diagrama de Arestas (Flat-Topped)
                         </span>
-                        <span class="text-[11px] text-slate-500 font-mono">Região 1 = Norte</span>
+                        <span class="text-[11px] text-slate-500 font-mono">Região 1 = Aresta Norte</span>
                     </div>
 
-                    <!-- SVG Hexagon -->
+                    <!-- SVG Hexagon (Flat-Topped: Flat edge on Top/Bottom) -->
                     <div class="relative w-64 h-64 my-2">
                         <svg viewBox="0 0 300 300" class="w-full h-full drop-shadow-md">
-                            <!-- Background Hexagon Outline -->
-                            <polygon points="150,15 266.9,82.5 266.9,217.5 150,285 33.1,217.5 33.1,82.5" 
+                            <!-- Background Flat-Topped Hexagon Outer Border -->
+                            <!-- Points: (85, 37.06), (215, 37.06), (280, 150), (215, 262.94), (85, 262.94), (20, 150) -->
+                            <polygon points="85,37.06 215,37.06 280,150 215,262.94 85,262.94 20,150" 
                                      fill="none" stroke="#334155" stroke-width="3" />
 
-                            <!-- Region 1 (North) -->
-                            <polygon id="hex-reg-1" class="hex-region" points="150,150 150,15 266.9,82.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
-                            <!-- Region 2 (NE) -->
-                            <polygon id="hex-reg-2" class="hex-region" points="150,150 266.9,82.5 266.9,217.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
-                            <!-- Region 3 (SE) -->
-                            <polygon id="hex-reg-3" class="hex-region" points="150,150 266.9,217.5 150,285" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
-                            <!-- Region 4 (SW) -->
-                            <polygon id="hex-reg-4" class="hex-region" points="150,150 150,285 33.1,217.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
-                            <!-- Region 5 (NW) -->
-                            <polygon id="hex-reg-5" class="hex-region" points="150,150 33.1,217.5 33.1,82.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
-                            <!-- Region 6 (NNW) -->
-                            <polygon id="hex-reg-6" class="hex-region" points="150,150 33.1,82.5 150,15" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            <!-- Region 1: Top Edge (North) [Center -> (85,37.06) -> (215,37.06)] -->
+                            <polygon id="hex-reg-1" class="hex-region" points="150,150 85,37.06 215,37.06" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            
+                            <!-- Region 2: Top-Right Edge (Northeast) [Center -> (215,37.06) -> (280,150)] -->
+                            <polygon id="hex-reg-2" class="hex-region" points="150,150 215,37.06 280,150" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            
+                            <!-- Region 3: Bottom-Right Edge (Southeast) [Center -> (280,150) -> (215,262.94)] -->
+                            <polygon id="hex-reg-3" class="hex-region" points="150,150 280,150 215,262.94" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            
+                            <!-- Region 4: Bottom Edge (South) [Center -> (215,262.94) -> (85,262.94)] -->
+                            <polygon id="hex-reg-4" class="hex-region" points="150,150 215,262.94 85,262.94" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            
+                            <!-- Region 5: Bottom-Left Edge (Southwest) [Center -> (85,262.94) -> (20,150)] -->
+                            <polygon id="hex-reg-5" class="hex-region" points="150,150 85,262.94 20,150" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            
+                            <!-- Region 6: Top-Left Edge (Northwest) [Center -> (20,150) -> (85,37.06)] -->
+                            <polygon id="hex-reg-6" class="hex-region" points="150,150 20,150 85,37.06" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
 
-                            <!-- Labels & Markers -->
-                            <text x="185" y="75" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">1</text>
-                            <text x="220" y="155" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">2</text>
-                            <text x="185" y="235" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">3</text>
-                            <text x="95" y="235" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">4</text>
-                            <text x="60" y="155" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">5</text>
-                            <text x="95" y="75" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">6</text>
+                            <!-- Region Labels positioned near outer edges -->
+                            <text x="150" y="72" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code" text-anchor="middle">1</text>
+                            <text x="215" y="112" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code" text-anchor="middle">2</text>
+                            <text x="215" y="200" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code" text-anchor="middle">3</text>
+                            <text x="150" y="238" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code" text-anchor="middle">4</text>
+                            <text x="85" y="200" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code" text-anchor="middle">5</text>
+                            <text x="85" y="112" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code" text-anchor="middle">6</text>
 
-                            <!-- Center indicator -->
-                            <circle cx="150" cy="150" r="6" fill="#64748b" />
-                            <text x="150" y="8" fill="#e2e8f0" font-size="11" font-weight="bold" text-anchor="middle">N</text>
+                            <!-- Center node -->
+                            <circle cx="150" cy="150" r="5" fill="#64748b" />
+                            <text x="150" y="24" fill="#e2e8f0" font-size="11" font-weight="bold" text-anchor="middle">NORTE</text>
                         </svg>
                     </div>
 
@@ -364,10 +370,10 @@
                 <div>
                     <h4 class="font-bold text-amber-400 uppercase text-xs tracking-wider mb-2">Regras Principais</h4>
                     <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-300">
-                        <li><strong>Regiões do Hexágono:</strong> Dividido em 6 regiões (1 ao Norte, 2 a 6 em sentido horário).</li>
+                        <li><strong>Geometria Flat-Topped:</strong> Dividido em 6 regiões de aresta (Região 1 na aresta Norte, 2 a 6 no sentido horário).</li>
                         <li><strong>Bioma Padrão / Colinas (2d8):</strong> Ignorar 7 e 8.</li>
                         <li><strong>Bioma Floresta (2d6):</strong> Sem descartes (alta densidade).</li>
-                        <li><strong>Bioma Deserto (2d20):</strong> Ignorar 7 a 20 (49% de hexes vazios).</li>
+                        <li><strong>Bioma Deserto (2d20):</strong> Ignorar 7 a 20 (~49% de hexes vazios).</li>
                         <li><strong>Valores Isolados (1-6):</strong> Gera <em>Referência Simples</em> (Role apenas Forma Básica [1d20]). Visível apenas dentro do hexágono.</li>
                         <li><strong>Pares de Valores (1-6):</strong> Gera <em>Referência Especial / Monumento</em> (Role Forma Básica, Uso Atual e Característica d6/d4). Visível em hexágonos adjacentes.</li>
                     </ul>
@@ -411,12 +417,12 @@
         let tableCaracteristica = {};
 
         const REGION_NAMES = {
-            1: "Região 1 (Norte)",
-            2: "Região 2 (Nordeste)",
-            3: "Região 3 (Sudeste)",
-            4: "Região 4 (Sudoeste)",
-            5: "Região 5 (Noroeste)",
-            6: "Região 6 (Norte-Noroeste)"
+            1: "Região 1 (Aresta Norte)",
+            2: "Região 2 (Aresta Nordeste)",
+            3: "Região 3 (Aresta Sudeste)",
+            4: "Região 4 (Aresta Sul)",
+            5: "Região 5 (Aresta Sudoeste)",
+            6: "Região 6 (Aresta Noroeste)"
         };
 
         const BIOMES = {
