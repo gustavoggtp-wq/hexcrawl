@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Landmarks Hexcrawl</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Font: Inter & Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        /* SVG Hexagon styling */
+        .hex-region {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .hex-region:hover {
+            fill-opacity: 0.35;
+        }
+        .hex-region.active-simple {
+            fill: #3b82f6 !important;
+            fill-opacity: 0.45 !important;
+            stroke: #60a5fa !important;
+            stroke-width: 2.5 !important;
+        }
+        .hex-region.active-special {
+            fill: #eab308 !important;
+            fill-opacity: 0.55 !important;
+            stroke: #fde047 !important;
+            stroke-width: 3 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-900">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400">
+                    <i class="ph ph-hexagon text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-slate-100 leading-tight">Hexcrawl Landmarks</h1>
+                    <p class="text-xs text-slate-400">Gerador & Customizador de Pontos de Referência</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="flex items-center space-x-2">
+                <button id="nav-btn-generator" onclick="switchView('generator')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-amber-500 text-slate-950 border-amber-400 shadow-sm">
+                    <i class="ph ph-dices text-base"></i>
+                    <span>Gerador</span>
+                </button>
+                <button id="nav-btn-editor" onclick="switchView('editor')" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700">
+                    <i class="ph ph-[pencil-simple] text-base text-amber-400"></i>
+                    <span>Editar Tabelas</span>
+                </button>
+                <button id="btn-toggle-rules" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+                    <i class="ph ph-book-open text-base"></i>
+                    <span>Regras</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- VIEW 1: MAIN GENERATOR PANEL -->
+    <main id="view-generator" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grow w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: Controls & Hex Visualization (5 cols) -->
+            <section class="lg:col-span-5 flex flex-col gap-6">
+
+                <!-- Biome Selector Card -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="ph ph-tree-evergreen text-amber-400 text-sm"></i>
+                        Selecione o Bioma / Terreno
+                    </label>
+
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <button data-biome="hills" class="biome-btn p-3 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700/80 text-left transition flex flex-col justify-between group active-biome" onclick="setBiome('hills')">
+                            <span class="text-xs font-bold text-slate-200 group-hover:text-amber-400">Padrão / Colinas</span>
+                            <span class="font-mono text-[11px] text-slate-400 mt-1">2d8 (desc 7-8)</span>
+                        </button>
+
+                        <button data-biome="forest" class="biome-btn p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-700/80 text-left transition flex flex-col justify-between group opacity-70" onclick="setBiome('forest')">
+                            <span class="text-xs font-bold text-slate-200 group-hover:text-amber-400">Floresta / Denso</span>
+                            <span class="font-mono text-[11px] text-slate-400 mt-1">2d6 (sem desc)</span>
+                        </button>
+
+                        <button data-biome="desert" class="biome-btn p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-700/80 text-left transition flex flex-col justify-between group opacity-70" onclick="setBiome('desert')">
+                            <span class="text-xs font-bold text-slate-200 group-hover:text-amber-400">Deserto / Ermo</span>
+                            <span class="font-mono text-[11px] text-slate-400 mt-1">2d20 (desc 7-20)</span>
+                        </button>
+                    </div>
+
+                    <!-- Biome Odds Summary -->
+                    <div id="biome-stats" class="bg-slate-950/70 border border-slate-800/80 rounded-lg p-3 text-xs text-slate-400 grid grid-cols-2 gap-2 font-mono">
+                        <div><span class="text-slate-500">Vazio:</span> <span id="stat-void" class="text-slate-300">6.25%</span></div>
+                        <div><span class="text-slate-500">1 Ref. Simples:</span> <span id="stat-s1" class="text-blue-400">37.50%</span></div>
+                        <div><span class="text-slate-500">2 Ref. Simples:</span> <span id="stat-s2" class="text-indigo-400">46.88%</span></div>
+                        <div><span class="text-slate-500">1 Ref. Especial:</span> <span id="stat-spec" class="text-amber-400">9.38%</span></div>
+                    </div>
+                </div>
+
+                <!-- Interactive Hex Diagram -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl flex flex-col items-center relative">
+                    <div class="w-full flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <i class="ph ph-compass text-amber-400 text-base"></i>
+                            Diagrama de Regiões do Hex
+                        </span>
+                        <span class="text-[11px] text-slate-500 font-mono">Região 1 = Norte</span>
+                    </div>
+
+                    <!-- SVG Hexagon -->
+                    <div class="relative w-64 h-64 my-2">
+                        <svg viewBox="0 0 300 300" class="w-full h-full drop-shadow-md">
+                            <!-- Background Hexagon Outline -->
+                            <polygon points="150,15 266.9,82.5 266.9,217.5 150,285 33.1,217.5 33.1,82.5" 
+                                     fill="none" stroke="#334155" stroke-width="3" />
+
+                            <!-- Region 1 (North) -->
+                            <polygon id="hex-reg-1" class="hex-region" points="150,150 150,15 266.9,82.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            <!-- Region 2 (NE) -->
+                            <polygon id="hex-reg-2" class="hex-region" points="150,150 266.9,82.5 266.9,217.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            <!-- Region 3 (SE) -->
+                            <polygon id="hex-reg-3" class="hex-region" points="150,150 266.9,217.5 150,285" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            <!-- Region 4 (SW) -->
+                            <polygon id="hex-reg-4" class="hex-region" points="150,150 150,285 33.1,217.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            <!-- Region 5 (NW) -->
+                            <polygon id="hex-reg-5" class="hex-region" points="150,150 33.1,217.5 33.1,82.5" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+                            <!-- Region 6 (NNW) -->
+                            <polygon id="hex-reg-6" class="hex-region" points="150,150 33.1,82.5 150,15" fill="#1e293b" fill-opacity="0.2" stroke="#475569" stroke-width="1.5" />
+
+                            <!-- Labels & Markers -->
+                            <text x="185" y="75" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">1</text>
+                            <text x="220" y="155" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">2</text>
+                            <text x="185" y="235" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">3</text>
+                            <text x="95" y="235" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">4</text>
+                            <text x="60" y="155" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">5</text>
+                            <text x="95" y="75" fill="#94a3b8" font-size="16" font-weight="bold" font-family="Fira Code">6</text>
+
+                            <!-- Center indicator -->
+                            <circle cx="150" cy="150" r="6" fill="#64748b" />
+                            <text x="150" y="8" fill="#e2e8f0" font-size="11" font-weight="bold" text-anchor="middle">N</text>
+                        </svg>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-xs mt-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-blue-500/80 border border-blue-400 inline-block"></span>
+                            <span class="text-slate-400">Ref. Simples</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-amber-500/80 border border-amber-300 inline-block"></span>
+                            <span class="text-slate-400">Ref. Especial</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Action Button -->
+                <button id="btn-generate" onclick="generateLandmark()" class="w-full py-4 px-6 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-base rounded-xl shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
+                    <i class="ph ph-dices text-2xl"></i>
+                    <span>GERAR LANDMARK DO HEX</span>
+                </button>
+            </section>
+
+            <!-- RIGHT COLUMN: Generated Output & Log (7 cols) -->
+            <section class="lg:col-span-7 flex flex-col gap-6">
+
+                <!-- Current Result Panel -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col justify-between min-h-[320px]">
+                    <div>
+                        <!-- Result Header & Dice Roll -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+                            <div>
+                                <span class="text-xs text-slate-400 font-medium">Resultado do Hexágono</span>
+                                <h2 id="result-title" class="text-xl font-bold text-slate-100 flex items-center gap-2">
+                                    <span>Aguardando rolagem...</span>
+                                </h2>
+                            </div>
+                            <div id="dice-display" class="hidden flex items-center gap-2 font-mono text-sm bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                                <span class="text-slate-500 text-xs">Dados:</span>
+                                <span id="dice-raw" class="text-amber-400 font-bold"></span>
+                            </div>
+                        </div>
+
+                        <!-- Result Details Cards Container -->
+                        <div id="result-cards" class="space-y-4">
+                            <div class="text-center py-12 text-slate-500">
+                                <i class="ph ph-compass-rose text-4xl mb-2 opacity-50 block"></i>
+                                <p class="text-sm">Selecione o bioma e clique em <strong>"Gerar Landmark"</strong> para rolar os dados.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visibility Note Footer -->
+                    <div id="visibility-box" class="hidden mt-6 pt-3 border-t border-slate-800/80 text-xs text-slate-400 flex items-start gap-2 bg-slate-950/40 p-2.5 rounded-lg">
+                        <i class="ph ph-eye text-amber-400 text-base shrink-0 mt-0.5"></i>
+                        <span id="visibility-text">Visibilidade normal: 4,5 km (raio médio do hexágono em terreno aberto).</span>
+                    </div>
+                </div>
+
+                <!-- History Log Panel -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-xl flex flex-col grow">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                            <i class="ph ph-clock-counter-clockwise text-slate-400 text-base"></i>
+                            Histórico de Exploração
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyLog()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition flex items-center gap-1">
+                                <i class="ph ph-copy"></i>
+                                <span>Copiar</span>
+                            </button>
+                            <button onclick="clearLog()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-rose-950/50 hover:text-rose-300 text-slate-400 rounded border border-slate-700 transition flex items-center gap-1">
+                                <i class="ph ph-trash"></i>
+                                <span>Limpar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Log Box -->
+                    <div id="log-list" class="bg-slate-950/70 border border-slate-800/80 rounded-lg p-3 font-mono text-xs text-slate-300 space-y-2 max-h-[220px] overflow-y-auto">
+                        <div class="text-slate-600 italic text-center py-4">Nenhum hexágono gerado até o momento.</div>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- VIEW 2: TABLE EDITOR PANEL -->
+    <main id="view-editor" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grow w-full hidden">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-xl space-y-8">
+            
+            <!-- Editor Header Actions -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+                        <i class="ph ph-sliders-horizontal text-amber-400"></i>
+                        Personalização de Tabelas
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Edite qualquer opção abaixo. As alterações serão salvas no seu navegador (localStorage) e usadas imediatamente pelo gerador.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="resetTablesToDefault()" class="px-4 py-2 bg-slate-800 hover:bg-rose-950/40 hover:text-rose-300 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i class="ph ph-arrows-counter-clockwise text-base"></i>
+                        <span>Restaurar Padrão</span>
+                    </button>
+                    <button onclick="saveTableEdits()" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/10 transition">
+                        <i class="ph ph-floppy-disk text-base"></i>
+                        <span>Salvar Alterações</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast alert for Save/Reset -->
+            <div id="editor-toast" class="hidden p-3 rounded-lg text-xs font-medium border transition"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- COLUMN 1: FORMA BÁSICA & USO ATUAL -->
+                <div class="space-y-6">
+                    <!-- Forma Básica (1d20) -->
+                    <div class="border border-slate-800 rounded-xl p-4 bg-slate-950/50">
+                        <h3 class="font-bold text-sm text-slate-200 border-b border-slate-800 pb-2 mb-3 flex items-center justify-between">
+                            <span>Forma Básica (1d20)</span>
+                            <span class="text-xs font-mono text-amber-400">20 itens</span>
+                        </h3>
+                        <div id="editor-forma-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <!-- Inputs injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Uso Atual (1d8) -->
+                    <div class="border border-slate-800 rounded-xl p-4 bg-slate-950/50">
+                        <h3 class="font-bold text-sm text-slate-200 border-b border-slate-800 pb-2 mb-3 flex items-center justify-between">
+                            <span>Uso Atual (1d8)</span>
+                            <span class="text-xs font-mono text-amber-400">8 itens</span>
+                        </h3>
+                        <div id="editor-uso-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <!-- Inputs injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUMN 2: CARACTERÍSTICAS (d6 / d4) -->
+                <div class="space-y-6">
+                    <div class="border border-slate-800 rounded-xl p-4 bg-slate-950/50">
+                        <h3 class="font-bold text-sm text-slate-200 border-b border-slate-800 pb-2 mb-3 flex items-center justify-between">
+                            <span>Características (d6 / d4)</span>
+                            <span class="text-xs font-mono text-amber-400">6 Categorias x 4 Sub-opções</span>
+                        </h3>
+                        <div id="editor-caract-list" class="space-y-4 text-xs">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Save Action -->
+            <div class="border-t border-slate-800 pt-4 flex justify-end gap-3">
+                <button onclick="resetTablesToDefault()" class="px-4 py-2 bg-slate-800 hover:bg-rose-950/40 hover:text-rose-300 border border-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="ph ph-arrows-counter-clockwise text-base"></i>
+                    <span>Restaurar Padrão</span>
+                </button>
+                <button onclick="saveTableEdits()" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-lg text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/10 transition">
+                    <i class="ph ph-floppy-disk text-base"></i>
+                    <span>Salvar Alterações</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Tables & Rules -->
+    <div id="modal-rules" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="font-bold text-slate-100 flex items-center gap-2 text-base">
+                    <i class="ph ph-book-bookmark text-amber-400"></i>
+                    Regras de Geração & Visibilidade
+                </h3>
+                <button id="btn-close-rules" class="p-1 text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-800">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300">
+                <!-- Directives -->
+                <div>
+                    <h4 class="font-bold text-amber-400 uppercase text-xs tracking-wider mb-2">Regras Principais</h4>
+                    <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-300">
+                        <li><strong>Regiões do Hexágono:</strong> Dividido em 6 regiões (1 ao Norte, 2 a 6 em sentido horário).</li>
+                        <li><strong>Bioma Padrão / Colinas (2d8):</strong> Ignorar 7 e 8.</li>
+                        <li><strong>Bioma Floresta (2d6):</strong> Sem descartes (alta densidade).</li>
+                        <li><strong>Bioma Deserto (2d20):</strong> Ignorar 7 a 20 (49% de hexes vazios).</li>
+                        <li><strong>Valores Isolados (1-6):</strong> Gera <em>Referência Simples</em> (Role apenas Forma Básica [1d20]). Visível apenas dentro do hexágono.</li>
+                        <li><strong>Pares de Valores (1-6):</strong> Gera <em>Referência Especial / Monumento</em> (Role Forma Básica, Uso Atual e Característica d6/d4). Visível em hexágonos adjacentes.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-3 bg-slate-950 text-center text-xs text-slate-500">
+        Gerador de Landmarks Hexcrawl • OSR Compatible Tools
+    </footer>
+
+    <!-- JavaScript Engine -->
+    <script>
+        // --- DEFAULT DATA TABLES ---
+        const DEFAULT_TABLE_FORMA = [
+            "Árvore enorme", "Jardim silvestre", "Fungo gigante", "Escultura", "Obelisco",
+            "Círculo Monolítico", "Torre de Vigia", "Mausoléu", "Ponte", "Altar",
+            "Assentamento", "Pilares", "Muro e/ou portão", "Campo memorial", "Lago",
+            "Cachoeira", "Cânion estreito", "Bloco de rocha", "Caverna", "Arco natural"
+        ];
+
+        const DEFAULT_TABLE_USO = [
+            "Refúgio de viajantes", "Esquecido", "Local de culto", "Ocupado por grupo",
+            "Protegido por guardião", "Marco de navegação", "Temido e evitado", "Guarda um segredo"
+        ];
+
+        const DEFAULT_TABLE_CARACTERISTICA = {
+            1: { name: "Arruinado por...", items: ["Batalha ou guerra", "Monstro gigante", "Catástrofe climática", "Evento sobrenatural"] },
+            2: { name: "Uso original...", items: ["Execuções", "Registrar a história", "Prender espíritos", "Cultuar deuses"] },
+            3: { name: "Aparência...", items: ["Cristal", "Pedra comum", "Metal nobre", "Material orgânico"] },
+            4: { name: "Formato...", items: ["Arma", "Animal", "Pessoa", "Parte de corpo"] },
+            5: { name: "Efeito sobrenatural...", items: ["Nevoeiro constante", "Brilha sob o luar", "Flutuante", "Gera ruído constante"] },
+            6: { name: "Aspecto ambiental...", items: ["Silêncio constante", "Atrai relâmpagos", "Tomado pela flora", "Animais o evitam"] }
+        };
+
+        // RUNTIME WORKING COPIES
+        let tableForma = [];
+        let tableUso = [];
+        let tableCaracteristica = {};
+
+        const REGION_NAMES = {
+            1: "Região 1 (Norte)",
+            2: "Região 2 (Nordeste)",
+            3: "Região 3 (Sudeste)",
+            4: "Região 4 (Sudoeste)",
+            5: "Região 5 (Noroeste)",
+            6: "Região 6 (Norte-Noroeste)"
+        };
+
+        const BIOMES = {
+            hills: { name: "Padrão / Colinas", dice: 2, sides: 8, maxValid: 6, stats: { void: "6.25%", s1: "37.50%", s2: "46.88%", spec: "9.38%" } },
+            forest: { name: "Floresta / Denso", dice: 2, sides: 6, maxValid: 6, stats: { void: "0.00%", s1: "55.56%", s2: "27.78%", spec: "16.67%" } },
+            desert: { name: "Deserto / Ermo", dice: 2, sides: 20, maxValid: 6, stats: { void: "49.00%", s1: "42.00%", s2: "7.50%", spec: "1.50%" } }
+        };
+
+        let currentBiomeKey = 'hills';
+        let hexHistory = [];
+        let hexCounter = 1;
+
+        // --- LOCAL STORAGE HANDLING ---
+        function loadTablesFromStorage() {
+            try {
+                const storedForma = localStorage.getItem('hexcrawl_table_forma');
+                const storedUso = localStorage.getItem('hexcrawl_table_uso');
+                const storedCaract = localStorage.getItem('hexcrawl_table_caract');
+
+                tableForma = storedForma ? JSON.parse(storedForma) : [...DEFAULT_TABLE_FORMA];
+                tableUso = storedUso ? JSON.parse(storedUso) : [...DEFAULT_TABLE_USO];
+                tableCaracteristica = storedCaract ? JSON.parse(storedCaract) : JSON.parse(JSON.stringify(DEFAULT_TABLE_CARACTERISTICA));
+            } catch (e) {
+                console.warn("Falha ao carregar dados do localStorage. Usando padrão.", e);
+                tableForma = [...DEFAULT_TABLE_FORMA];
+                tableUso = [...DEFAULT_TABLE_USO];
+                tableCaracteristica = JSON.parse(JSON.stringify(DEFAULT_TABLE_CARACTERISTICA));
+            }
+        }
+
+        function saveTablesToStorage() {
+            localStorage.setItem('hexcrawl_table_forma', JSON.stringify(tableForma));
+            localStorage.setItem('hexcrawl_table_uso', JSON.stringify(tableUso));
+            localStorage.setItem('hexcrawl_table_caract', JSON.stringify(tableCaracteristica));
+        }
+
+        // --- VIEW SWITCHING ---
+        function switchView(viewName) {
+            const genView = document.getElementById('view-generator');
+            const edView = document.getElementById('view-editor');
+            const btnGen = document.getElementById('nav-btn-generator');
+            const btnEd = document.getElementById('nav-btn-editor');
+
+            if (viewName === 'editor') {
+                genView.classList.add('hidden');
+                edView.classList.remove('hidden');
+
+                btnEd.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-amber-500 text-slate-950 border-amber-400 shadow-sm";
+                btnGen.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700";
+
+                renderEditorForm();
+            } else {
+                edView.classList.add('hidden');
+                genView.classList.remove('hidden');
+
+                btnGen.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-amber-500 text-slate-950 border-amber-400 shadow-sm";
+                btnEd.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700";
+            }
+        }
+
+        // --- EDITOR FORM RENDER & SAVE ---
+        function renderEditorForm() {
+            // Forma Básica (20)
+            const formaList = document.getElementById('editor-forma-list');
+            formaList.innerHTML = tableForma.map((val, idx) => `
+                <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded border border-slate-800">
+                    <span class="font-mono text-slate-500 w-6 text-right font-semibold">${idx + 1}.</span>
+                    <input type="text" id="edit-forma-${idx}" value="${escapeAttr(val)}" class="bg-slate-950 text-slate-200 px-2 py-1 rounded border border-slate-700 w-full focus:outline-none focus:border-amber-500 text-xs font-medium">
+                </div>
+            `).join('');
+
+            // Uso Atual (8)
+            const usoList = document.getElementById('editor-uso-list');
+            usoList.innerHTML = tableUso.map((val, idx) => `
+                <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded border border-slate-800">
+                    <span class="font-mono text-slate-500 w-6 text-right font-semibold">${idx + 1}.</span>
+                    <input type="text" id="edit-uso-${idx}" value="${escapeAttr(val)}" class="bg-slate-950 text-slate-200 px-2 py-1 rounded border border-slate-700 w-full focus:outline-none focus:border-amber-500 text-xs font-medium">
+                </div>
+            `).join('');
+
+            // Características (6x4)
+            const caractList = document.getElementById('editor-caract-list');
+            let caractHTML = '';
+            for (let c = 1; c <= 6; c++) {
+                const catObj = tableCaracteristica[c];
+                caractHTML += `
+                    <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-bold text-amber-400">${c}.</span>
+                            <input type="text" id="edit-caract-cat-${c}" value="${escapeAttr(catObj.name)}" class="bg-slate-950 text-amber-300 px-2 py-1 rounded border border-slate-700 w-full font-semibold focus:outline-none focus:border-amber-500 text-xs">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
+                            ${catObj.items.map((item, subIdx) => `
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-mono text-slate-500 text-[11px] font-semibold">${c}.${subIdx + 1}</span>
+                                    <input type="text" id="edit-caract-item-${c}-${subIdx}" value="${escapeAttr(item)}" class="bg-slate-950 text-slate-200 px-2 py-1 rounded border border-slate-800 w-full focus:outline-none focus:border-amber-500 text-xs">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            caractList.innerHTML = caractHTML;
+        }
+
+        function saveTableEdits() {
+            // Read Forma
+            for (let i = 0; i < 20; i++) {
+                const input = document.getElementById(`edit-forma-${i}`);
+                if (input) tableForma[i] = input.value.trim() || DEFAULT_TABLE_FORMA[i];
+            }
+
+            // Read Uso
+            for (let i = 0; i < 8; i++) {
+                const input = document.getElementById(`edit-uso-${i}`);
+                if (input) tableUso[i] = input.value.trim() || DEFAULT_TABLE_USO[i];
+            }
+
+            // Read Características
+            for (let c = 1; c <= 6; c++) {
+                const catNameInput = document.getElementById(`edit-caract-cat-${c}`);
+                if (catNameInput) {
+                    tableCaracteristica[c].name = catNameInput.value.trim() || DEFAULT_TABLE_CARACTERISTICA[c].name;
+                }
+                for (let s = 0; s < 4; s++) {
+                    const itemInput = document.getElementById(`edit-caract-item-${c}-${s}`);
+                    if (itemInput) {
+                        tableCaracteristica[c].items[s] = itemInput.value.trim() || DEFAULT_TABLE_CARACTERISTICA[c].items[s];
+                    }
+                }
+            }
+
+            saveTablesToStorage();
+            showToast("Tabelas salvas com sucesso! O gerador passará a utilizar suas novas opções.", "success");
+        }
+
+        function resetTablesToDefault() {
+            if (!confirm("Tem certeza que deseja restaurar todas as tabelas para os valores padrão originais?")) {
+                return;
+            }
+            tableForma = [...DEFAULT_TABLE_FORMA];
+            tableUso = [...DEFAULT_TABLE_USO];
+            tableCaracteristica = JSON.parse(JSON.stringify(DEFAULT_TABLE_CARACTERISTICA));
+            saveTablesToStorage();
+            renderEditorForm();
+            showToast("Tabelas restauradas para a versão padrão original.", "info");
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('editor-toast');
+            toast.classList.remove('hidden', 'bg-emerald-950/80', 'border-emerald-500', 'text-emerald-300', 'bg-blue-950/80', 'border-blue-500', 'text-blue-300');
+
+            if (type === 'success') {
+                toast.classList.add('bg-emerald-950/80', 'border-emerald-500', 'text-emerald-300');
+            } else {
+                toast.classList.add('bg-blue-950/80', 'border-blue-500', 'text-blue-300');
+            }
+
+            toast.innerHTML = `<i class="ph ph-check-circle text-base"></i> <span>${message}</span>`;
+            toast.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+
+        function escapeAttr(str) {
+            return String(str).replace(/"/g, '&quot;');
+        }
+
+        // --- HELPER ROLL & BIOME LOGIC ---
+        function roll(max) {
+            return Math.floor(Math.random() * max) + 1;
+        }
+
+        function setBiome(key) {
+            currentBiomeKey = key;
+            const b = BIOMES[key];
+
+            document.querySelectorAll('.biome-btn').forEach(btn => {
+                if (btn.dataset.biome === key) {
+                    btn.classList.add('active-biome', 'border-slate-700', 'bg-slate-800', 'opacity-100');
+                    btn.classList.remove('border-slate-800', 'bg-slate-900/60', 'opacity-70');
+                } else {
+                    btn.classList.remove('active-biome', 'border-slate-700', 'bg-slate-800', 'opacity-100');
+                    btn.classList.add('border-slate-800', 'bg-slate-900/60', 'opacity-70');
+                }
+            });
+
+            document.getElementById('stat-void').textContent = b.stats.void;
+            document.getElementById('stat-s1').textContent = b.stats.s1;
+            document.getElementById('stat-s2').textContent = b.stats.s2;
+            document.getElementById('stat-spec').textContent = b.stats.spec;
+        }
+
+        function resetHexSVG() {
+            for (let i = 1; i <= 6; i++) {
+                const el = document.getElementById(`hex-reg-${i}`);
+                if (el) el.className.baseVal = "hex-region";
+            }
+        }
+
+        function highlightHexSVG(region, type) {
+            const el = document.getElementById(`hex-reg-${region}`);
+            if (el) {
+                el.className.baseVal = (type === 'special') ? "hex-region active-special" : "hex-region active-simple";
+            }
+        }
+
+        // MAIN GENERATOR LOGIC
+        function generateLandmark() {
+            const biome = BIOMES[currentBiomeKey];
+            resetHexSVG();
+
+            const d1 = roll(biome.sides);
+            const d2 = roll(biome.sides);
+            const rawRolls = [d1, d2];
+            const validRolls = rawRolls.filter(v => v >= 1 && v <= biome.maxValid);
+
+            const diceDisplay = document.getElementById('dice-display');
+            const diceRaw = document.getElementById('dice-raw');
+            diceDisplay.classList.remove('hidden');
+            diceRaw.textContent = `[ ${d1} , ${d2} ] (${biome.name})`;
+
+            const titleEl = document.getElementById('result-title');
+            const cardsContainer = document.getElementById('result-cards');
+            const visBox = document.getElementById('visibility-box');
+            const visText = document.getElementById('visibility-text');
+
+            cardsContainer.innerHTML = '';
+            visBox.classList.remove('hidden');
+
+            let logEntryText = `Hex #${hexCounter} (${biome.name}) [Dados: ${d1}, ${d2}]: `;
+
+            if (validRolls.length === 0) {
+                titleEl.innerHTML = `<span class="text-slate-400">Hexágono Vazio</span>`;
+                cardsContainer.innerHTML = `
+                    <div class="p-6 bg-slate-950/60 border border-slate-800 rounded-xl text-center">
+                        <i class="ph ph-wind text-3xl text-slate-500 mb-2 block"></i>
+                        <h3 class="text-base font-bold text-slate-300">Sem Pontos Notáveis</h3>
+                        <p class="text-xs text-slate-500 mt-1">Os dados caíram em áreas nulas (${rawRolls.join(', ')}). Apenas vastidão de terreno natural.</p>
+                    </div>
+                `;
+                visText.textContent = "Nenhum marco visível neste hexágono.";
+                logEntryText += "Vazio (Sem pontos de interesse).";
+
+            } else if (validRolls.length === 1) {
+                const reg = validRolls[0];
+                highlightHexSVG(reg, 'simple');
+
+                const formaRoll = roll(20);
+                const forma = tableForma[formaRoll - 1];
+
+                titleEl.innerHTML = `<span class="text-blue-400">1 Referência Simples</span>`;
+
+                cardsContainer.appendChild(createLandmarkCard({
+                    type: 'simple',
+                    region: reg,
+                    forma: forma,
+                    formaRoll: formaRoll
+                }));
+
+                visText.textContent = `Referência Simples na ${REGION_NAMES[reg]}: visível apenas dentro deste hexágono.`;
+                logEntryText += `1 Ref. Simples na ${REGION_NAMES[reg]} -> ${forma}`;
+
+            } else if (validRolls.length === 2) {
+                if (validRolls[0] === validRolls[1]) {
+                    const reg = validRolls[0];
+                    highlightHexSVG(reg, 'special');
+
+                    const formaRoll = roll(20);
+                    const forma = tableForma[formaRoll - 1];
+
+                    const usoRoll = roll(8);
+                    const uso = tableUso[usoRoll - 1];
+
+                    const catRoll = roll(6);
+                    const subRoll = roll(4);
+                    const catObj = tableCaracteristica[catRoll];
+                    const charText = `${catObj.name} ${catObj.items[subRoll - 1]}`;
+
+                    titleEl.innerHTML = `<span class="text-amber-400 flex items-center gap-2"><i class="ph ph-star-fill text-sm"></i> 1 Referência Especial (Monumento)</span>`;
+
+                    cardsContainer.appendChild(createLandmarkCard({
+                        type: 'special',
+                        region: reg,
+                        forma: forma,
+                        formaRoll: formaRoll,
+                        uso: uso,
+                        usoRoll: usoRoll,
+                        caracteristica: charText,
+                        caracteristicaRoll: `${catRoll}.${subRoll}`
+                    }));
+
+                    visText.textContent = `Monumento/Referência Especial na ${REGION_NAMES[reg]}: visível dentro do hexágono e em HEXÁGONOS ADJACENTES!`;
+                    logEntryText += `1 MONUMENTO (Especial) na ${REGION_NAMES[reg]} -> ${forma} | Uso: ${uso} | Carac: ${charText}`;
+
+                } else {
+                    const reg1 = validRolls[0];
+                    const reg2 = validRolls[1];
+                    highlightHexSVG(reg1, 'simple');
+                    highlightHexSVG(reg2, 'simple');
+
+                    const forma1Roll = roll(20);
+                    const forma1 = tableForma[forma1Roll - 1];
+
+                    const forma2Roll = roll(20);
+                    const forma2 = tableForma[forma2Roll - 1];
+
+                    titleEl.innerHTML = `<span class="text-indigo-400">2 Referências Simples</span>`;
+
+                    cardsContainer.appendChild(createLandmarkCard({
+                        type: 'simple',
+                        region: reg1,
+                        forma: forma1,
+                        formaRoll: forma1Roll
+                    }));
+
+                    cardsContainer.appendChild(createLandmarkCard({
+                        type: 'simple',
+                        region: reg2,
+                        forma: forma2,
+                        formaRoll: forma2Roll
+                    }));
+
+                    visText.textContent = `Referências Simples nas Regiões ${reg1} e ${reg2}: visíveis dentro deste hexágono.`;
+                    logEntryText += `2 Ref. Simples -> Região ${reg1}: ${forma1} | Região ${reg2}: ${forma2}`;
+                }
+            }
+
+            addLogEntry(logEntryText);
+            hexCounter++;
+        }
+
+        function createLandmarkCard(data) {
+            const isSpecial = data.type === 'special';
+            const card = document.createElement('div');
+            card.className = `p-4 rounded-xl border ${isSpecial ? 'bg-amber-950/20 border-amber-500/40' : 'bg-slate-950/70 border-slate-800'} space-y-2 text-sm transition animate-fadeIn`;
+
+            const headerColor = isSpecial ? 'text-amber-400' : 'text-blue-400';
+            const badgeBg = isSpecial ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-blue-500/10 border-blue-500/30 text-blue-300';
+
+            let html = `
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                    <span class="font-bold text-xs ${headerColor} flex items-center gap-1.5 uppercase tracking-wider">
+                        <i class="ph ${isSpecial ? 'ph-sparkle' : 'ph-map-pin'}"></i>
+                        ${isSpecial ? 'Referência Especial (Monumento)' : 'Referência Simples'}
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeBg}">
+                        ${REGION_NAMES[data.region]}
+                    </span>
+                </div>
+
+                <div class="pt-1">
+                    <span class="text-xs text-slate-500 block font-mono">Forma Básica (d20 = ${data.formaRoll}):</span>
+                    <strong class="text-base text-slate-100 font-semibold">${data.forma}</strong>
+                </div>
+            `;
+
+            if (isSpecial) {
+                html += `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800/60 text-xs font-mono">
+                        <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                            <span class="text-slate-500 block">Uso Atual (d8 = ${data.usoRoll}):</span>
+                            <span class="text-slate-200 font-medium">${data.uso}</span>
+                        </div>
+                        <div class="bg-slate-900/80 p-2 rounded border border-slate-800">
+                            <span class="text-slate-500 block">Característica (${data.caracteristicaRoll}):</span>
+                            <span class="text-amber-300 font-medium">${data.caracteristica}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = html;
+            return card;
+        }
+
+        // HISTORY LOG LOGIC
+        function addLogEntry(text) {
+            hexHistory.unshift(text);
+            updateLogUI();
+        }
+
+        function updateLogUI() {
+            const container = document.getElementById('log-list');
+            if (hexHistory.length === 0) {
+                container.innerHTML = `<div class="text-slate-600 italic text-center py-4">Nenhum hexágono gerado até o momento.</div>`;
+                return;
+            }
+
+            container.innerHTML = hexHistory.map((item) => `
+                <div class="py-1 border-b border-slate-800/50 last:border-0 text-slate-300 flex items-start gap-2">
+                    <span class="text-amber-500 font-bold shrink-0">></span>
+                    <span class="grow">${item}</span>
+                </div>
+            `).join('');
+        }
+
+        function copyLog() {
+            if (hexHistory.length === 0) return;
+            const textToCopy = hexHistory.join('\n');
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = textToCopy;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+            alert("Histórico copiado para a área de transferência!");
+        }
+
+        function clearLog() {
+            hexHistory = [];
+            hexCounter = 1;
+            updateLogUI();
+        }
+
+        // MODAL RULES
+        document.getElementById('btn-toggle-rules').addEventListener('click', () => {
+            document.getElementById('modal-rules').classList.remove('hidden');
+        });
+        document.getElementById('btn-close-rules').addEventListener('click', () => {
+            document.getElementById('modal-rules').classList.add('hidden');
+        });
+        document.getElementById('modal-rules').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-rules') {
+                document.getElementById('modal-rules').classList.add('hidden');
+            }
+        });
+
+        // INITIALIZATION
+        window.onload = function() {
+            loadTablesFromStorage();
+            setBiome('hills');
+        }
+    </script>
+</body>
+</html>
